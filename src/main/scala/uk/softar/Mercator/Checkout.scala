@@ -6,5 +6,8 @@ package uk.softar.Mercator
 case class Checkout(prices: PriceProvider) {
   type Price = PriceProvider#Price
 
-  def getTotal(basket: BasketInterface): Price = 0
+  def getTotal(basket: BasketInterface): Price =
+    basket.getItems
+      .map(prices.getPrice)
+      .sum
 }
