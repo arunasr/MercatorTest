@@ -11,6 +11,10 @@ class MainTest extends AnyFlatSpec with should.Matchers {
       prices(product)
   }
 
+  case class TestBasket(val products: Seq[PriceProvider#Product]) extends BasketInterface {
+    override def getItems: Seq[Product] = products
+  }
+
   "Prices" should "be correct" in {
     priceProvider getPrice "Apple" shouldEqual 60
     priceProvider getPrice "Orange" shouldEqual 25
@@ -18,12 +22,17 @@ class MainTest extends AnyFlatSpec with should.Matchers {
 
   "Checkout" should "return correct totals" in {
     val checkout = Checkout(priceProvider)
-    case class TestBasket(val products: Seq[PriceProvider#Product]) extends BasketInterface {
-      override def getItems: Seq[Product] = products
+    checkout.getTotal(TestBasket(Seq.empty), Seq.empty) shouldEqual 0
+    checkout.getTotal(TestBasket(Seq("Apple")), Seq.empty) shouldEqual 60
+    checkout.getTotal(TestBasket(Seq("Orange")), Seq.empty) shouldEqual 25
+    checkout.getTotal(TestBasket("Apple,Apple,Orange,Apple".split(',')), Seq.empty) shouldEqual 205
+  }
+
+  it should "apply correct promotion discounts" in {
+    val promotion = new PromotionInterface {
+      override def getDiscount(basket: BasketInterface): Price = 30
     }
-    checkout getTotal TestBasket(Seq.empty) shouldEqual 0
-    checkout getTotal TestBasket(Seq("Apple")) shouldEqual 60
-    checkout getTotal TestBasket(Seq("Orange")) shouldEqual 25
-    checkout getTotal TestBasket("Apple,Apple,Orange,Apple".split(',')) shouldEqual 205
+    val checkout = Checkout(priceProvider)
+    checkout.getTotal(TestBasket("Apple,Apple,Orange,Apple".split(',')), Seq(promotion)) shouldEqual 175
   }
 }

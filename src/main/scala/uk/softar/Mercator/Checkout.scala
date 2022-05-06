@@ -6,8 +6,11 @@ package uk.softar.Mercator
 case class Checkout(prices: PriceProvider) {
   type Price = PriceProvider#Price
 
-  def getTotal(basket: BasketInterface): Price =
-    basket.getItems
+  def getTotal(basket: BasketInterface, promotions: Seq[PromotionInterface]): Price = {
+    val price = basket.getItems
       .map(prices.getPrice)
       .sum
+    val discount = promotions.map(_.getDiscount(basket)).sum
+    price - discount
+  }
 }
